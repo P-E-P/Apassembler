@@ -50,7 +50,7 @@ fn valid_op_char(chr: char) -> bool {
 
 fn parse_vi_opname(input: &str) -> Res<&str, &str> {
     context(
-        "opcode name",
+        "vi opcode name",
         alt((
             tag("JMP"),
             tag("JEQ"),
@@ -81,7 +81,7 @@ fn parse_vi(input: &str) -> Res<&str, Instruction> {
 
 fn parse_v_opname(input: &str) -> Res<&str, &str> {
     context(
-        "opcode name",
+        "v opcode name",
         alt((
             tag("B"),
             tag("BEQ"),
@@ -110,12 +110,76 @@ fn parse_v(input: &str) -> Res<&str, Instruction> {
     )
 }
 
+fn parse_iv_opname(input: &str) -> Res<&str, &str> {
+    context(
+        "iv opcode name",
+        alt((
+            tag("NOT"),
+            tag("INC"),
+            tag("DEC"),
+            tag("CLR"),
+            tag("PUSH"),
+            tag("PULL"),
+            tag("ROI"),
+            tag("TST"),
+            tag("SET"),
+        )),
+    )(input)
+    .map(|(next_input, res)| (next_input, res))
+}
 
+fn parse_iv(input: &str) -> Res<&str, Instruction> {
+    context("v", tuple((parse_iv_opname, space1, parse_operand)))(input).map(
+        |(next_input, (opname, _, operand))| {
+            (
+                next_input,
+                Instruction::IV {
+                    opname: opname.to_owned(),
+                    tsd: operand,
+                },
+            )
+        },
+    )
+}
+
+fn parse_iii_opname(input: &str) -> Res<&str, &str> {
+    context(
+        "iii opcode name",
+        alt((
+            tag("ORI"),
+            tag("ANDI"),
+            tag("XORI"),
+            tag("CI"),
+            tag("ADDI"),
+            tag("STRI"),
+            tag("MULI"),
+            tag("LI"),
+            tag("LIMI"),
+        )),
+    )(input)
+    .map(|(next_input, res)| (next_input, res))
+}
+
+fn parse_iii(input: &str) -> Res<&str, Instruction> {
+    context("v", tuple((parse_iii_opname, space1, parse_operand)))(input).map(
+        |(next_input, (opname, _, operand))| {
+            (
+                next_input,
+                Instruction::III {
+                    opname: opname.to_owned(),
+                    tsd: operand,
+                },
+            )
+        },
+    )
+}
 
 pub fn parse_instruction(input: &str) -> Res<&str, Instruction> {
     context(
         "instruction",
         alt((
+            parse_iii,
+            parse_iv,
             parse_v,
             parse_vi,
         )),
