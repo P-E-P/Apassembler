@@ -1,5 +1,5 @@
 use super::register::parse_register;
-use super::{Res, Ts};
+use super::{Operand, Res};
 use nom::{
     bytes::complete::tag,
     character::complete::{digit1, space0},
@@ -7,17 +7,17 @@ use nom::{
     sequence::tuple,
 };
 
-pub fn parse_pointer(input: &str) -> Res<&str, Ts> {
+pub fn parse_pointer(input: &str) -> Res<&str, Operand> {
     context("pointer register", tuple((tag("*"), parse_register)))(input)
-        .map(|(next_input, (_star, register))| (next_input, Ts::Address(register)))
+        .map(|(next_input, (_star, register))| (next_input, Operand::Address(register)))
 }
 
-pub fn parse_incremented_pointer(input: &str) -> Res<&str, Ts> {
+pub fn parse_incremented_pointer(input: &str) -> Res<&str, Operand> {
     context(
         "incremented pointer register",
         tuple((tag("*"), parse_register, tag("+"))),
     )(input)
-    .map(|(next_input, (_star, register, _plus))| (next_input, Ts::AddressIncrement(register)))
+    .map(|(next_input, (_star, register, _plus))| (next_input, Operand::AddressIncrement(register)))
 }
 
 #[cfg(test)]
@@ -29,12 +29,15 @@ mod tests {
     fn incremented() {
         assert_eq!(
             parse_incremented_pointer("*R15+"),
-            Ok(("", Ts::AddressIncrement(Register(15))))
+            Ok(("", Operand::AddressIncrement(Register(15))))
         )
     }
 
     #[test]
     fn pointer() {
-        assert_eq!(parse_pointer("*R15"), Ok(("", Ts::Address(Register(15)))))
+        assert_eq!(
+            parse_pointer("*R15"),
+            Ok(("", Operand::Address(Register(15))))
+        )
     }
 }

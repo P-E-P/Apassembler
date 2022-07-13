@@ -46,7 +46,7 @@ fn hex_primary(input: &str) -> Res<&str, u16> {
     })
 }
 
-pub fn parse_raw_address(input: &str) -> Res<&str, Address> {
+fn parse_raw_address(input: &str) -> Res<&str, Address> {
     context("Raw address", tuple((tag("0x"), hex_primary)))(input)
         .map(|(next_input, (_prefix, address))| (next_input, Address::Raw(address)))
 }
