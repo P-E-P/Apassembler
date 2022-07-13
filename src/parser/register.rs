@@ -7,14 +7,10 @@ use nom::{
 };
 
 #[derive(Debug, Eq, PartialEq)]
-pub struct Register(u8);
+pub struct Register(pub u8);
 
 pub fn parse_register(input: &str) -> Res<&str, Register> {
-    context(
-        "register",
-        tuple((space0, tag("R"), digit1, space0)),
-    )(input)
-    .map(|(next_input, (_, _r, digit, _))| {
+    context("register", tuple((tag("R"), digit1)))(input).map(|(next_input, (_r, digit))| {
         (
             next_input,
             Register(digit.parse::<u8>().expect("Cannot convert to int")),
