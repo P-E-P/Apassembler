@@ -44,10 +44,6 @@ pub enum Instruction {
 
 type Res<T, U> = IResult<T, U, VerboseError<T>>;
 
-fn valid_op_char(chr: char) -> bool {
-    chr.is_ascii_uppercase()
-}
-
 fn parse_vi_opname(input: &str) -> Res<&str, &str> {
     context(
         "vi opcode name",
