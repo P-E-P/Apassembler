@@ -1,5 +1,5 @@
 use clap::{arg, command};
-use parser::instruction::Instruction;
+use parser::instruction::{Instruction, self};
 use std::{
     fs::File,
     io::{BufRead, BufReader},
@@ -33,4 +33,5 @@ fn main() {
 
     let file = File::open(filepath).expect("Cannot open file");
     let instructions: Vec<Instruction> = parse_instruction(file);
+
 }

@@ -1,3 +1,4 @@
+use std::fmt;
 use nom::character::complete::digit1;
 
 use nom::branch::alt;
@@ -40,6 +41,53 @@ pub enum Instruction {
         displacement: Address,
     },
 }
+
+impl Instruction {
+    pub fn to_binary(&self, symtable: Vec<(String, String)>) -> Vec<u16> {
+
+        let mut result : Vec<u16> = vec![];
+
+        fn get_word(operand: &Operand) -> Option<u16> {
+            match operand {
+                Operand::NextWord(address) => match address {
+                    Address::Raw(value) => Some(*value),
+                    Address::Symbolic(_) => todo!(),
+                },
+                _ => None
+            }
+        }
+
+        result.push(match self {
+            Instruction::I { opname, ts, tsd } => 0,
+            Instruction::II { opname, shift, tsd } => todo!(),
+            Instruction::Iii { opname, tsd } => todo!(),
+            Instruction::IV { opname, tsd } => todo!(),
+            Instruction::V { opname, tsd } => todo!(),
+            Instruction::VI { opname, displacement } => todo!(),
+        });
+
+        if let Some(value) = match &self {
+            Instruction::I { opname: _, ts, tsd: _ } => get_word(ts),
+            _ => None,
+        } {
+            result.push(value);
+        }
+
+        if let Some(value) = match &self {
+            Instruction::I { opname: _, ts: _, tsd } => get_word(tsd),
+            Instruction::II { opname: _, shift: _, tsd } => get_word(tsd),
+            Instruction::Iii { opname: _, tsd } => get_word(tsd),
+            Instruction::IV { opname: _, tsd } => get_word(tsd),
+            Instruction::V { opname: _, tsd } => get_word(tsd),
+            _ => None
+        } {
+            result.push(value);
+        }
+
+        result
+    }
+}
+
 
 fn parse_vi_opname(input: &str) -> Res<&str, &str> {
     context(
