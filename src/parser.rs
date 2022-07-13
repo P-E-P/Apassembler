@@ -208,10 +208,54 @@ fn parse_ii(input: &str) -> Res<&str, Instruction> {
     })
 }
 
+fn parse_i_opname(input: &str) -> Res<&str, &str> {
+    context(
+        "i opcode name",
+        alt((
+            tag("OR"),
+            tag("AND"),
+            tag("XOR"),
+            tag("CMP"),
+            tag("ADD"),
+            tag("STR"),
+            tag("MUL"),
+            tag("MOV"),
+        )),
+    )(input)
+    .map(|(next_input, res)| (next_input, res))
+}
+
+fn parse_i(input: &str) -> Res<&str, Instruction> {
+    context(
+        "i",
+        tuple((
+            parse_i_opname,
+            space1,
+            parse_operand,
+            space0,
+            tag(","),
+            space0,
+            parse_operand,
+        )),
+    )(input)
+    .map(
+        |(next_input, (opname, _, operand_src, _, _comma, _, operand_dest))| {
+            (
+                next_input,
+                Instruction::I {
+                    opname: opname.to_owned(),
+                    ts: operand_src,
+                    tsd: operand_dest,
+                },
+            )
+        },
+    )
+}
+
 pub fn parse_instruction(input: &str) -> Res<&str, Instruction> {
     context(
         "instruction",
-        alt((parse_ii, parse_iii, parse_iv, parse_v, parse_vi)),
+        alt((parse_i, parse_ii, parse_iii, parse_iv, parse_v, parse_vi)),
     )(input)
     .map(|(next_input, res)| (next_input, res))
 }
