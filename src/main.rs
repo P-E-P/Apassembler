@@ -1,5 +1,5 @@
 use clap::{arg, command};
-use parser::Instruction;
+use parser::instruction::Instruction;
 use std::{
     fs::File,
     io::{BufRead, BufReader},
@@ -16,7 +16,7 @@ fn parse_instruction(file: File) -> Vec<Instruction> {
         let line = line.expect("Cannot read line");
 
         if !line.is_empty() {
-            match parser::parse_instruction(&line) {
+            match parser::parse_line(&line) {
                 Ok((_, ins)) => result.push(ins),
                 Err(why) => eprintln!("Error while parsing line \n{}\n Error is {:?}", line, why),
             }

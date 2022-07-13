@@ -1,10 +1,5 @@
 use super::Res;
-use nom::{
-    bytes::complete::tag,
-    character::complete::digit1,
-    error::context,
-    sequence::tuple,
-};
+use nom::{bytes::complete::tag, character::complete::digit1, error::context, sequence::tuple};
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct Register(pub u8);
