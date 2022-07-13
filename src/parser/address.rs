@@ -2,7 +2,7 @@ use super::Res;
 use nom::branch::alt;
 use nom::{
     bytes::complete::{tag, take_while, take_while_m_n},
-    character::complete::{digit1, space0},
+    character::complete::space0,
     error::context,
     sequence::tuple,
 };
@@ -34,11 +34,11 @@ fn from_hex(input: &str) -> Result<u16, std::num::ParseIntError> {
 }
 
 fn is_hex_digit(c: char) -> bool {
-    c.is_digit(16)
+    c.is_ascii_hexdigit()
 }
 
 fn hex_primary(input: &str) -> Res<&str, u16> {
-    context("hex primary", take_while_m_n(1, 8, is_hex_digit))(input).map(|(next_input, (hexa))| {
+    context("hex primary", take_while_m_n(1, 8, is_hex_digit))(input).map(|(next_input, hexa)| {
         (
             next_input,
             from_hex(hexa).expect("Unable to convert from hexadecimal"),

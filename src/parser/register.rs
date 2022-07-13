@@ -1,7 +1,7 @@
 use super::Res;
 use nom::{
     bytes::complete::tag,
-    character::complete::{digit1, space0},
+    character::complete::digit1,
     error::context,
     sequence::tuple,
 };

@@ -29,7 +29,7 @@ pub enum Instruction {
         shift: u8,
         tsd: Operand,
     },
-    III {
+    Iii {
         opname: String,
         tsd: Operand,
     },
@@ -166,7 +166,7 @@ fn parse_iii(input: &str) -> Res<&str, Instruction> {
         |(next_input, (opname, _, operand))| {
             (
                 next_input,
-                Instruction::III {
+                Instruction::Iii {
                     opname: opname.to_owned(),
                     tsd: operand,
                 },

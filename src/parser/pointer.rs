@@ -2,7 +2,6 @@ use super::register::parse_register;
 use super::{Operand, Res};
 use nom::{
     bytes::complete::tag,
-    character::complete::{digit1, space0},
     error::context,
     sequence::tuple,
 };
