@@ -1,5 +1,8 @@
-use std::fmt;
+use std::collections::HashMap;
+
+use bit_field::BitField;
 use nom::character::complete::digit1;
+use phf::phf_map;
 
 use nom::branch::alt;
 use nom::{
@@ -12,6 +15,62 @@ use nom::{
 use super::address::{parse_address, Address};
 use super::operand::{parse_operand, Operand};
 use super::Res;
+
+static OPCODES: phf::Map<&'static str, u16> = phf_map! {
+    // I
+    "OR" => 0b000,
+    "AND" => 0b001,
+    "XOR" => 0b010,
+    "CMP" => 0b011,
+    "ADD" => 0b110,
+    "STR" => 0b101,
+    "MUL" => 0b110,
+    "MOV" => 0b111,
+    // II
+    "SLL" => 0b000,
+    "SRL" => 0b001,
+    "SLA" => 0b010,
+    "SRA" => 0b011,
+    "ROT" => 0b100,
+    // III
+    "ORI" => 0b0000,
+    "ANDI" => 0b0001,
+    "XORI" => 0b0010,
+    "CI" => 0b0011,
+    "ADDI" => 0b0100,
+    "STRI" => 0b0101,
+    "MULI" => 0b0110,
+    "LI" => 0b1000,
+    "LIMI" => 0b1001,
+    // IV
+    "NOT" => 0b000,
+    "INC" => 0b001,
+    "DEC" => 0b010,
+    "CLR" => 0b011,
+    "PUSH" => 0b100,
+    "PULL" => 0b101,
+    "ROI" => 0b110,
+    "TEST" => 0b111,
+    "SET" => 0b111,
+    // V
+    "B" => 0b000,
+    "BEQ" => 0b001,
+    "BNE" => 0b010,
+    "BC" => 0b011,
+    "BNC" => 0b100,
+    "BGT" => 0b101,
+    "BLT" => 0b110,
+    "BN" => 0b111,
+    // VI
+    "JMP" => 0b000,
+    "JEQ" => 0b001,
+    "JNE" => 0b010,
+    "JC" => 0b011,
+    "JNC" => 0b100,
+    "JGT" => 0b101,
+    "JLT" => 0b110,
+    "JN" => 0b111,
+};
 
 pub enum Instruction {
     I {
@@ -43,9 +102,8 @@ pub enum Instruction {
 }
 
 impl Instruction {
-    pub fn to_binary(&self, symtable: Vec<(String, String)>) -> Vec<u16> {
-
-        let mut result : Vec<u16> = vec![];
+    pub fn to_binary(&self, symtable: HashMap<String, u16>) -> Vec<u16> {
+        let mut result: Vec<u16> = vec![];
 
         fn get_word(operand: &Operand) -> Option<u16> {
             match operand {
@@ -53,33 +111,78 @@ impl Instruction {
                     Address::Raw(value) => Some(*value),
                     Address::Symbolic(_) => todo!(),
                 },
-                _ => None
+                _ => None,
             }
         }
 
         result.push(match self {
-            Instruction::I { opname, ts, tsd } => 0,
-            Instruction::II { opname, shift, tsd } => todo!(),
-            Instruction::Iii { opname, tsd } => todo!(),
-            Instruction::IV { opname, tsd } => todo!(),
-            Instruction::V { opname, tsd } => todo!(),
-            Instruction::VI { opname, displacement } => todo!(),
+            Instruction::I { opname, ts, tsd } => *0u16
+                .set_bit(15, false)
+                .set_bits(12..=14, *OPCODES.get(opname).unwrap())
+                .set_bits(10..=11, ts.into())
+                .set_bits(6..=9, ts.get_register_value())
+                .set_bits(4..=5, tsd.into())
+                .set_bits(..=3, tsd.get_register_value()),
+            Instruction::II { opname, shift, tsd } => *0u16
+                .set_bits(14..=15, 0b10)
+                .set_bits(11..=13, *OPCODES.get(opname).unwrap())
+                .set_bit(10, false)
+                .set_bits(6..=9, (*shift).into())
+                .set_bits(4..=5, tsd.into())
+                .set_bits(0..=3, tsd.get_register_value()),
+            Instruction::Iii { opname, tsd } => *0u16
+                .set_bits(13..=15, 0b110)
+                .set_bits(9..=12, *OPCODES.get(opname).unwrap())
+                .set_bits(6..=8, 0b000)
+                .set_bits(4..=5, tsd.into())
+                .set_bits(..=3, tsd.get_register_value()),
+            Instruction::IV { opname, tsd } => *0u16
+                .set_bits(11..=15, 0b11100)
+                .set_bits(8..=10, *OPCODES.get(opname).unwrap())
+                .set_bits(6..=7, 0b00)
+                .set_bits(4..=5, tsd.into())
+                .set_bits(..=3, tsd.get_register_value()),
+            Instruction::V { opname, tsd } => *0u16
+                .set_bits(11..=15, 0b11101)
+                .set_bits(8..=10, *OPCODES.get(opname).unwrap())
+                .set_bits(6..=7, 0b00)
+                .set_bits(4..=5, tsd.into())
+                .set_bits(..=3, tsd.get_register_value()),
+            Instruction::VI {
+                opname,
+                displacement,
+            } => *0u16
+                .set_bits(11..=15, 0b11110)
+                .set_bits(8..=10, *OPCODES.get(opname).unwrap())
+                .set_bits(..=7, displacement.resolve(symtable)),
         });
 
         if let Some(value) = match &self {
-            Instruction::I { opname: _, ts, tsd: _ } => get_word(ts),
+            Instruction::I {
+                opname: _,
+                ts,
+                tsd: _,
+            } => get_word(ts),
             _ => None,
         } {
             result.push(value);
         }
 
         if let Some(value) = match &self {
-            Instruction::I { opname: _, ts: _, tsd } => get_word(tsd),
-            Instruction::II { opname: _, shift: _, tsd } => get_word(tsd),
+            Instruction::I {
+                opname: _,
+                ts: _,
+                tsd,
+            } => get_word(tsd),
+            Instruction::II {
+                opname: _,
+                shift: _,
+                tsd,
+            } => get_word(tsd),
             Instruction::Iii { opname: _, tsd } => get_word(tsd),
             Instruction::IV { opname: _, tsd } => get_word(tsd),
             Instruction::V { opname: _, tsd } => get_word(tsd),
-            _ => None
+            _ => None,
         } {
             result.push(value);
         }
@@ -87,7 +190,6 @@ impl Instruction {
         result
     }
 }
-
 
 fn parse_vi_opname(input: &str) -> Res<&str, &str> {
     context(

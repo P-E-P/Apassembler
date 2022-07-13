@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use super::Res;
 use nom::branch::alt;
 use nom::{
@@ -11,6 +13,15 @@ use nom::{
 pub enum Address {
     Raw(u16),
     Symbolic(String),
+}
+
+impl Address {
+    pub fn resolve(&self, symbols: HashMap<String, u16>) -> u16 {
+        match self {
+            Address::Raw(value) => *value,
+            Address::Symbolic(value) => *symbols.get(value).expect("Cannot resolve symbol"),
+        }
+    }
 }
 
 fn sym_address_char(chr: char) -> bool {
