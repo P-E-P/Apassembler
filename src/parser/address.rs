@@ -16,10 +16,10 @@ pub enum Address {
 }
 
 impl Address {
-    pub fn resolve(&self, symbols: HashMap<String, u16>) -> u16 {
+    pub fn resolve(&self, symbols: &HashMap<String, u16>) -> u16 {
         match self {
             Address::Raw(value) => *value,
-            Address::Symbolic(value) => *symbols.get(value).expect("Cannot resolve symbol"),
+            Address::Symbolic(value) => *symbols.get(value).expect(&format!("Cannot resolve symbol {}", value)),
         }
     }
 }
@@ -57,9 +57,14 @@ fn hex_primary(input: &str) -> Res<&str, u16> {
     })
 }
 
-fn parse_raw_address(input: &str) -> Res<&str, Address> {
+pub fn parse_raw_address_value(input: &str) -> Res<&str, u16> {
     context("Raw address", tuple((tag("0x"), hex_primary)))(input)
-        .map(|(next_input, (_prefix, address))| (next_input, Address::Raw(address)))
+        .map(|(next_input, (_prefix, address))| (next_input, address))
+}
+
+fn parse_raw_address(input: &str) -> Res<&str, Address> {
+    context("Raw address", parse_raw_address_value)(input)
+        .map(|(next_input, address)| (next_input, Address::Raw(address)))
 }
 
 #[cfg(test)]

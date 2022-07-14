@@ -72,6 +72,7 @@ static OPCODES: phf::Map<&'static str, u16> = phf_map! {
     "JN" => 0b111,
 };
 
+#[derive(Debug)]
 pub enum Instruction {
     I {
         opname: String,
@@ -102,14 +103,18 @@ pub enum Instruction {
 }
 
 impl Instruction {
-    pub fn to_binary(&self, symtable: HashMap<String, u16>) -> Vec<u16> {
+    pub fn to_binary(&self, symtable: &HashMap<String, u16>) -> Vec<u16> {
         let mut result: Vec<u16> = vec![];
 
-        fn get_word(operand: &Operand) -> Option<u16> {
+        fn get_word(operand: &Operand, symtable: &HashMap<String, u16>) -> Option<u16> {
             match operand {
                 Operand::NextWord(address) => match address {
                     Address::Raw(value) => Some(*value),
-                    Address::Symbolic(_) => todo!(),
+                    Address::Symbolic(symbol) => Some(if let Some(x) = symtable.get(symbol) {
+                        *x
+                    } else {
+                        0
+                    }),
                 },
                 _ => None,
             }
@@ -162,7 +167,7 @@ impl Instruction {
                 opname: _,
                 ts,
                 tsd: _,
-            } => get_word(ts),
+            } => get_word(ts, symtable),
             _ => None,
         } {
             result.push(value);
@@ -173,15 +178,15 @@ impl Instruction {
                 opname: _,
                 ts: _,
                 tsd,
-            } => get_word(tsd),
+            } => get_word(tsd, symtable),
             Instruction::II {
                 opname: _,
                 shift: _,
                 tsd,
-            } => get_word(tsd),
-            Instruction::Iii { opname: _, tsd } => get_word(tsd),
-            Instruction::IV { opname: _, tsd } => get_word(tsd),
-            Instruction::V { opname: _, tsd } => get_word(tsd),
+            } => get_word(tsd, symtable),
+            Instruction::Iii { opname: _, tsd } => get_word(tsd, symtable),
+            Instruction::IV { opname: _, tsd } => get_word(tsd, symtable),
+            Instruction::V { opname: _, tsd } => get_word(tsd, symtable),
             _ => None,
         } {
             result.push(value);
