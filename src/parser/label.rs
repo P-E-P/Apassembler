@@ -1,11 +1,11 @@
+use super::address::parse_raw_address_value;
 use super::Res;
 use nom::{
     bytes::complete::{tag, take_while},
-    character::complete::{space0},
+    character::complete::space0,
     error::context,
     sequence::tuple,
 };
-use super::address::parse_raw_address_value;
 
 #[derive(Debug, PartialEq)]
 pub struct Label {
@@ -20,22 +20,21 @@ impl Label {
 }
 
 pub fn parse_label_name(input: &str) -> Res<&str, String> {
-    context("label name", take_while(|e| char::from(e).is_alphabetic()))(input)
+    context("label name", take_while(|e: char| e.is_alphabetic()))(input)
         .map(|(next_input, label)| (next_input, label.to_owned()))
 }
 
 pub fn parse_label(input: &str) -> Res<&str, Label> {
     context(
         "@Address",
-        tuple((space0, tag("("), parse_raw_address_value, tag(")"), space0, parse_label_name)),
+        tuple((
+            space0,
+            tag("("),
+            parse_raw_address_value,
+            tag(")"),
+            space0,
+            parse_label_name,
+        )),
     )(input)
-    .map(|(next_input, (_, _lpar, address, _rpar, _, tag))| {
-        (
-            next_input,
-            Label::new(
-                address,
-                tag.to_owned(),
-            ),
-        )
-    })
+    .map(|(next_input, (_, _lpar, address, _rpar, _, tag))| (next_input, Label::new(address, tag)))
 }

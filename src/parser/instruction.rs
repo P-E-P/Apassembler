@@ -12,7 +12,7 @@ use nom::{
     sequence::tuple,
 };
 
-use super::address::{parse_address, Address};
+use super::address::{parse_relative, Address};
 use super::operand::{parse_operand, Operand};
 use super::Res;
 
@@ -72,6 +72,17 @@ static OPCODES: phf::Map<&'static str, u16> = phf_map! {
     "JN" => 0b111,
 };
 
+trait Padd<T> {
+    fn padd(self) -> T;
+}
+
+impl Padd<u16> for i8 {
+    fn padd(self) -> u16 {
+        let bytes = [0, self.to_be_bytes()[0]];
+        u16::from_be_bytes(bytes)
+    }
+}
+
 #[derive(Debug)]
 pub enum Instruction {
     I {
@@ -108,14 +119,7 @@ impl Instruction {
 
         fn get_word(operand: &Operand, symtable: &HashMap<String, u16>) -> Option<u16> {
             match operand {
-                Operand::NextWord(address) => match address {
-                    Address::Raw(value) => Some(*value),
-                    Address::Symbolic(symbol) => Some(if let Some(x) = symtable.get(symbol) {
-                        *x
-                    } else {
-                        0
-                    }),
-                },
+                Operand::NextWord(address) => address.resolve(symtable),
                 _ => None,
             }
         }
@@ -159,7 +163,7 @@ impl Instruction {
             } => *0u16
                 .set_bits(11..=15, 0b11110)
                 .set_bits(8..=10, *OPCODES.get(opname).unwrap())
-                .set_bits(..=7, displacement.resolve(symtable)),
+                .set_bits(..=7, displacement.resolve_relative().unwrap_or(0x0).padd()),
         });
 
         if let Some(value) = match &self {
@@ -214,7 +218,7 @@ fn parse_vi_opname(input: &str) -> Res<&str, &str> {
 }
 
 fn parse_vi(input: &str) -> Res<&str, Instruction> {
-    context("vi", tuple((parse_vi_opname, space1, parse_address)))(input).map(
+    context("vi", tuple((parse_vi_opname, space1, parse_relative)))(input).map(
         |(next_input, (opname, _, address))| {
             (
                 next_input,

@@ -4,22 +4,37 @@ use super::Res;
 use nom::branch::alt;
 use nom::{
     bytes::complete::{tag, take_while, take_while_m_n},
-    character::complete::space0,
     error::context,
     sequence::tuple,
 };
+pub use relative::parse_relative;
+
+mod relative;
 
 #[derive(Debug, PartialEq)]
 pub enum Address {
     Raw(u16),
     Symbolic(String),
+    RelativeSymbolic(String),
+    Relative(i8),
 }
 
 impl Address {
-    pub fn resolve(&self, symbols: &HashMap<String, u16>) -> u16 {
+    pub fn resolve(&self, symbols: &HashMap<String, u16>) -> Option<u16> {
         match self {
-            Address::Raw(value) => *value,
-            Address::Symbolic(value) => *symbols.get(value).expect(&format!("Cannot resolve symbol {}", value)),
+            Address::Raw(value) => Some(*value),
+            Address::Relative(_) => None,
+            Address::Symbolic(value) => symbols.get(value).copied(),
+            Address::RelativeSymbolic(_) => None,
+        }
+    }
+
+    pub fn resolve_relative(&self) -> Option<i8> {
+        match self {
+            Address::Raw(_) => None,
+            Address::Relative(value) => Some(*value),
+            Address::Symbolic(_) => None,
+            Address::RelativeSymbolic(_) => todo!("Cannot resolve relative symbols yet"),
         }
     }
 }
@@ -33,11 +48,8 @@ pub fn parse_address(input: &str) -> Res<&str, Address> {
 }
 
 fn parse_symbolic_address(input: &str) -> Res<&str, Address> {
-    context(
-        "@Address",
-        tuple((space0, tag("@"), take_while(sym_address_char), space0)),
-    )(input)
-    .map(|(next_input, (_, _a, address, _))| (next_input, Address::Symbolic(address.to_owned())))
+    context("@Address", tuple((tag("@"), take_while(sym_address_char))))(input)
+        .map(|(next_input, (_a, address))| (next_input, Address::Symbolic(address.to_owned())))
 }
 
 fn from_hex(input: &str) -> Result<u16, std::num::ParseIntError> {
