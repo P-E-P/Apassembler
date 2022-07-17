@@ -34,33 +34,21 @@ mod tests {
 
     #[test]
     fn complete_8bits() {
-        assert_eq!(
-            hex_8bits("ff"),
-            Ok(("", 255))
-        )
+        assert_eq!(hex_8bits("ff"), Ok(("", 255)))
     }
 
     #[test]
     fn uncomplete_8bits() {
-        assert_eq!(
-            hex_8bits("1"),
-            Ok(("", 1))
-        )
+        assert_eq!(hex_8bits("1"), Ok(("", 1)))
     }
 
     #[test]
     fn complete_16bits() {
-        assert_eq!(
-            hex_16bits("ffff"),
-            Ok(("", 65535))
-        )
+        assert_eq!(hex_16bits("ffff"), Ok(("", 65535)))
     }
 
     #[test]
     fn uncomplete_16bits() {
-        assert_eq!(
-            hex_16bits("1"),
-            Ok(("", 1))
-        )
+        assert_eq!(hex_16bits("1"), Ok(("", 1)))
     }
 }

@@ -1,10 +1,10 @@
 use super::address::parse_raw_address_value;
 use super::Res;
 use nom::{
-    bytes::complete::{tag, take_while},
-    character::complete::space0,
+    bytes::complete::take_while,
+    character::complete::{char, space0},
     error::context,
-    sequence::tuple,
+    sequence::{delimited, tuple},
 };
 
 #[derive(Debug, PartialEq)]
@@ -28,13 +28,10 @@ pub fn parse_label(input: &str) -> Res<&str, Label> {
     context(
         "@Address",
         tuple((
-            space0,
-            tag("("),
-            parse_raw_address_value,
-            tag(")"),
+            delimited(char('('), parse_raw_address_value, char(')')),
             space0,
             parse_label_name,
         )),
     )(input)
-    .map(|(next_input, (_, _lpar, address, _rpar, _, tag))| (next_input, Label::new(address, tag)))
+    .map(|(next_input, (address, _, tag))| (next_input, Label::new(address, tag)))
 }
