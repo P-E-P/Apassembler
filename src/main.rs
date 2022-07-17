@@ -1,4 +1,4 @@
-use clap::{arg, command};
+use clap::{arg, command, ArgAction};
 use parser::instruction::Instruction;
 use std::{
     collections::HashMap,
@@ -51,7 +51,11 @@ fn retrieve_symbols(filepath: &Path) -> HashMap<String, u16> {
 }
 
 fn main() {
-    let matches = command!().arg(arg!([FILE])).get_matches();
+    let matches = command!()
+        .arg(arg!(-b --binary).required(false).action(ArgAction::SetTrue))
+        .arg(arg!(-x --hex).required(false).action(ArgAction::SetTrue))
+        .arg(arg!([FILE]))
+        .get_matches();
 
     let filepath = Path::new(matches.value_of("FILE").expect("No file specified"));
 
@@ -61,14 +65,19 @@ fn main() {
     for instruction in instructions {
         let words = instruction.to_binary(&symbols);
         println!("{:?}", instruction);
-        print!("Binary: ");
-        for word in &words {
-            print!("{:016b} ", word);
+        if *matches.get_one::<bool>("binary").unwrap() {
+            print!("Binary: ");
+            for word in &words {
+                print!("{:016b} ", word);
+            }
+            println!();
         }
-        print!("\nHex: ");
-        for word in words {
-            print!("{:X} ", word);
+        if *matches.get_one::<bool>("hex").unwrap() {
+            print!("Hex: ");
+            for word in words {
+                print!("{:04X} ", word);
+            }
+            println!();
         }
-        println!();
     }
 }
