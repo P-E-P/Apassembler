@@ -21,7 +21,7 @@ fn parse_instruction(filepath: &Path) -> Vec<Instruction> {
         if !line.is_empty() {
             match parser::parse_line(&line) {
                 Ok((_, ins)) => result.push(ins),
-                Err(why) => eprintln!("Failed to parse instruction: {}", why),
+                Err(_why) => (),
             }
         }
     }
@@ -42,7 +42,7 @@ fn retrieve_symbols(filepath: &Path) -> HashMap<String, u16> {
                 Ok((_, ins)) => {
                     result.insert(ins.name, ins.address);
                 }
-                Err(why) => eprintln!("Failed to parse symbol: {}", why),
+                Err(_why) => (),
             }
         }
     }
