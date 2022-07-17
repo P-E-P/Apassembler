@@ -1,9 +1,6 @@
 use super::Res;
 
-use nom::{
-    bytes::complete::take_while_m_n,
-    error::context,
-};
+use nom::{bytes::complete::take_while_m_n, error::context};
 
 fn from_hex(input: &str) -> Result<u16, std::num::ParseIntError> {
     u16::from_str_radix(input, 16)

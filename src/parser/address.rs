@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 
-use super::Res;
-use super::hexadecimal::hex_16bits;
-use nom::branch::alt;
+use super::{hexadecimal::hex_16bits, Res};
 use nom::{
+    branch::alt,
     bytes::complete::{tag, take_while},
     error::context,
     sequence::tuple,

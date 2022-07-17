@@ -1,13 +1,12 @@
 use std::collections::HashMap;
 
 use bit_field::BitField;
-use nom::character::complete::digit1;
 use phf::phf_map;
 
-use nom::branch::alt;
 use nom::{
+    branch::alt,
     bytes::complete::tag,
-    character::complete::{space0, space1},
+    character::complete::{digit1, space0, space1},
     error::context,
     sequence::tuple,
 };

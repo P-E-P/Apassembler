@@ -1,5 +1,4 @@
-use super::register::parse_register;
-use super::{Operand, Res};
+use super::{register::parse_register, Operand, Res};
 use nom::{bytes::complete::tag, error::context, sequence::tuple};
 
 pub fn parse_pointer(input: &str) -> Res<&str, Operand> {

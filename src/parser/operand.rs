@@ -1,9 +1,10 @@
-use super::address::{parse_address, Address};
-use super::pointer::{parse_incremented_pointer, parse_pointer};
-use super::register::{parse_register, Register};
-use super::Res;
-use nom::branch::alt;
-use nom::error::context;
+use super::{
+    address::{parse_address, Address},
+    pointer::{parse_incremented_pointer, parse_pointer},
+    register::{parse_register, Register},
+    Res,
+};
+use nom::{branch::alt, error::context};
 
 #[derive(Debug, PartialEq)]
 pub enum Operand {

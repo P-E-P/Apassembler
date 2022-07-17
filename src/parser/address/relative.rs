@@ -1,14 +1,13 @@
-use super::Res;
-use nom::branch::alt;
-use nom::character::complete::digit1;
+use super::{Address, Res};
+use crate::parser::hexadecimal::hex_8bits;
+
 use nom::{
+    branch::alt,
     bytes::complete::{tag, take_while},
+    character::complete::digit1,
     error::context,
     sequence::tuple,
 };
-
-use crate::parser::hexadecimal::hex_8bits;
-use super::Address;
 
 fn parse_hard_positive_dec_relative(input: &str) -> Res<&str, i8> {
     context("Hard positive decimal address", tuple((tag("+"), digit1)))(input)
