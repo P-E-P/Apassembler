@@ -5,7 +5,7 @@ use nom::{
     branch::alt, bytes::complete::tag, character::complete::space1, error::context, sequence::tuple,
 };
 
-fn parse_vi_opname(input: &str) -> Res<&str, &str> {
+fn opname(input: &str) -> Res<&str, &str> {
     context(
         "vi opcode name",
         alt((
@@ -23,7 +23,7 @@ fn parse_vi_opname(input: &str) -> Res<&str, &str> {
 }
 
 pub fn parse(input: &str) -> Res<&str, Instruction> {
-    context("vi", tuple((parse_vi_opname, space1, parse_relative)))(input).map(
+    context("vi", tuple((opname, space1, parse_relative)))(input).map(
         |(next_input, (opname, _, address))| {
             (
                 next_input,

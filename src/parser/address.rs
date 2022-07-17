@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::{hexadecimal::hex_16bits, Res};
+use super::{hexadecimal::raw_16bits, Res};
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_while},
@@ -53,7 +53,7 @@ fn parse_symbolic(input: &str) -> Res<&str, Address> {
 }
 
 pub fn parse_raw_value(input: &str) -> Res<&str, u16> {
-    context("Raw address", tuple((tag("0x"), hex_16bits)))(input)
+    context("Raw address", tuple((tag("0x"), raw_16bits)))(input)
         .map(|(next_input, (_prefix, address))| (next_input, address))
 }
 

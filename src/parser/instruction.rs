@@ -97,6 +97,7 @@ pub enum Instruction {
     },
     Iii {
         opname: String,
+        immediate: u16,
         tsd: Operand,
     },
     IV {
@@ -139,7 +140,7 @@ impl Instruction {
                 .set_bits(6..=9, (*shift).into())
                 .set_bits(4..=5, tsd.into())
                 .set_bits(0..=3, tsd.get_register_value()),
-            Instruction::Iii { opname, tsd } => *0u16
+            Instruction::Iii { opname, immediate: _, tsd } => *0u16
                 .set_bits(13..=15, 0b110)
                 .set_bits(9..=12, *OPCODES.get(opname).unwrap())
                 .set_bits(6..=8, 0b000)
@@ -172,6 +173,9 @@ impl Instruction {
                 ts,
                 tsd: _,
             } => get_word(ts, symtable),
+            Instruction::Iii { opname:_ , immediate, tsd: _ } => {
+                Some(*immediate)
+            }
             _ => None,
         } {
             result.push(value);
@@ -188,7 +192,7 @@ impl Instruction {
                 shift: _,
                 tsd,
             } => get_word(tsd, symtable),
-            Instruction::Iii { opname: _, tsd } => get_word(tsd, symtable),
+            Instruction::Iii { opname: _, immediate: _,tsd } => get_word(tsd, symtable),
             Instruction::IV { opname: _, tsd } => get_word(tsd, symtable),
             Instruction::V { opname: _, tsd } => get_word(tsd, symtable),
             _ => None,
@@ -212,5 +216,4 @@ pub fn parse_instruction(input: &str) -> Res<&str, Instruction> {
             vi::parse,
         )),
     )(input)
-    .map(|(next_input, res)| (next_input, res))
 }

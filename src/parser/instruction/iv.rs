@@ -8,7 +8,7 @@ use nom::{
     branch::alt, bytes::complete::tag, character::complete::space1, error::context, sequence::tuple,
 };
 
-fn parse_iv_opname_generic(input: &str) -> Res<&str, &str> {
+fn opname_generic(input: &str) -> Res<&str, &str> {
     context(
         "iv opcode name",
         alt((
@@ -25,28 +25,26 @@ fn parse_iv_opname_generic(input: &str) -> Res<&str, &str> {
     .map(|(next_input, res)| (next_input, res))
 }
 
-fn parse_iv_generic(input: &str) -> Res<&str, Instruction> {
-    context(
-        "iv generic",
-        tuple((parse_iv_opname_generic, space1, parse_operand)),
-    )(input)
-    .map(|(next_input, (opname, _, operand))| {
-        (
-            next_input,
-            Instruction::IV {
-                opname: opname.to_owned(),
-                tsd: operand,
-            },
-        )
-    })
+fn parse_generic(input: &str) -> Res<&str, Instruction> {
+    context("iv generic", tuple((opname_generic, space1, parse_operand)))(input).map(
+        |(next_input, (opname, _, operand))| {
+            (
+                next_input,
+                Instruction::IV {
+                    opname: opname.to_owned(),
+                    tsd: operand,
+                },
+            )
+        },
+    )
 }
 
-fn parse_iv_opname_roi(input: &str) -> Res<&str, &str> {
+fn opname_roi(input: &str) -> Res<&str, &str> {
     context("iv roi opcode name", tag("ROI"))(input).map(|(next_input, res)| (next_input, res))
 }
 
-fn parse_iv_roi(input: &str) -> Res<&str, Instruction> {
-    context("iv roi", parse_iv_opname_roi)(input).map(|(next_input, opname)| {
+fn parse_roi(input: &str) -> Res<&str, Instruction> {
+    context("iv roi", opname_roi)(input).map(|(next_input, opname)| {
         (
             next_input,
             Instruction::IV {
@@ -58,6 +56,6 @@ fn parse_iv_roi(input: &str) -> Res<&str, Instruction> {
 }
 
 pub fn parse(input: &str) -> Res<&str, Instruction> {
-    context("iv", alt((parse_iv_generic, parse_iv_roi)))(input)
+    context("iv", alt((parse_generic, parse_roi)))(input)
         .map(|(next_input, instruction)| (next_input, instruction))
 }

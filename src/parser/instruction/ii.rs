@@ -9,7 +9,7 @@ use nom::{
     sequence::tuple,
 };
 
-fn parse_ii_opname(input: &str) -> Res<&str, &str> {
+fn opname(input: &str) -> Res<&str, &str> {
     context(
         "ii opcode name",
         alt((tag("SLL"), tag("SRL"), tag("SLA"), tag("SRA"), tag("ROT"))),
@@ -21,7 +21,7 @@ pub fn parse(input: &str) -> Res<&str, Instruction> {
     context(
         "ii",
         tuple((
-            parse_ii_opname,
+            opname,
             space1,
             digit1,
             space0,

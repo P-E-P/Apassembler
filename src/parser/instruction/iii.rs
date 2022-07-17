@@ -1,11 +1,25 @@
 use super::{Instruction, Res};
-use crate::parser::operand::parse_operand;
-
-use nom::{
-    branch::alt, bytes::complete::tag, character::complete::space1, error::context, sequence::tuple,
+use crate::parser::{
+    operand::parse_operand,
+    hexadecimal,
 };
 
-fn parse_iii_opname(input: &str) -> Res<&str, &str> {
+use nom::{
+    branch::alt,
+    bytes::complete::tag,
+    character::complete::{space0, space1, char},
+    error::context,
+    sequence::tuple,
+};
+
+fn immediate_value(input: &str) -> Res<&str, u16> {
+    context("immediate raw value", 
+        hexadecimal::i16
+    )(input)
+    .map(|(next_input, address)| (next_input, unsafe { std::mem::transmute(address)}))
+}
+
+fn opname(input: &str) -> Res<&str, &str> {
     context(
         "iii opcode name",
         alt((
@@ -24,15 +38,26 @@ fn parse_iii_opname(input: &str) -> Res<&str, &str> {
 }
 
 pub fn parse(input: &str) -> Res<&str, Instruction> {
-    context("iii", tuple((parse_iii_opname, space1, parse_operand)))(input).map(
-        |(next_input, (opname, _, operand))| {
-            (
-                next_input,
-                Instruction::Iii {
-                    opname: opname.to_owned(),
-                    tsd: operand,
-                },
-            )
-        },
-    )
+    context(
+        "iii",
+        tuple((
+            opname,
+            space1,
+            parse_operand,
+            space0,
+            char(','),
+            space0,
+            immediate_value,
+        )),
+    )(input)
+    .map(|(next_input, (opname, _, operand, _, _comma, _, immediate))| {
+        (
+            next_input,
+            Instruction::Iii {
+                opname: opname.to_owned(),
+                immediate,
+                tsd: operand,
+            },
+        )
+    })
 }
