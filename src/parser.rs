@@ -13,6 +13,7 @@ pub mod label;
 mod operand;
 mod pointer;
 mod register;
+pub mod hexadecimal;
 
 type Res<T, U> = IResult<T, U, VerboseError<T>>;
 

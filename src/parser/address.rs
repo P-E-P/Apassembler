@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 
 use super::Res;
+use super::hexadecimal::hex_16bits;
 use nom::branch::alt;
 use nom::{
-    bytes::complete::{tag, take_while, take_while_m_n},
+    bytes::complete::{tag, take_while},
     error::context,
     sequence::tuple,
 };
@@ -52,25 +53,8 @@ fn parse_symbolic_address(input: &str) -> Res<&str, Address> {
         .map(|(next_input, (_a, address))| (next_input, Address::Symbolic(address.to_owned())))
 }
 
-fn from_hex(input: &str) -> Result<u16, std::num::ParseIntError> {
-    u16::from_str_radix(input, 16)
-}
-
-fn is_hex_digit(c: char) -> bool {
-    c.is_ascii_hexdigit()
-}
-
-fn hex_primary(input: &str) -> Res<&str, u16> {
-    context("hex primary", take_while_m_n(1, 8, is_hex_digit))(input).map(|(next_input, hexa)| {
-        (
-            next_input,
-            from_hex(hexa).expect("Unable to convert from hexadecimal"),
-        )
-    })
-}
-
 pub fn parse_raw_address_value(input: &str) -> Res<&str, u16> {
-    context("Raw address", tuple((tag("0x"), hex_primary)))(input)
+    context("Raw address", tuple((tag("0x"), hex_16bits)))(input)
         .map(|(next_input, (_prefix, address))| (next_input, address))
 }
 

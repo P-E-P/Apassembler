@@ -7,6 +7,7 @@ use nom::{
     sequence::tuple,
 };
 
+use crate::parser::hexadecimal::hex_8bits;
 use super::Address;
 
 fn parse_hard_positive_dec_relative(input: &str) -> Res<&str, i8> {
@@ -38,13 +39,13 @@ fn parse_negative_dec_relative(input: &str) -> Res<&str, i8> {
 fn parse_hard_positive_hex_relative(input: &str) -> Res<&str, i8> {
     context(
         "Hard positive hexadecimal address",
-        tuple((tag("+"), super::hex_primary)),
+        tuple((tag("+"), hex_8bits)),
     )(input)
     .map(|(next_input, (_plus, value))| (next_input, i8::try_from(value).unwrap()))
 }
 
 fn parse_soft_positive_hex_relative(input: &str) -> Res<&str, i8> {
-    context("Soft positive hexadecimal address", super::hex_primary)(input)
+    context("Soft positive hexadecimal address", hex_8bits)(input)
         .map(|(next_input, value)| (next_input, i8::try_from(value).unwrap()))
 }
 
@@ -62,7 +63,7 @@ fn parse_positive_hex_relative(input: &str) -> Res<&str, i8> {
 fn parse_negative_hex_relative(input: &str) -> Res<&str, i8> {
     context(
         "Hard positive hexadecimal address",
-        tuple((tag("-"), super::hex_primary)),
+        tuple((tag("-"), hex_8bits)),
     )(input)
     .map(|(next_input, (_plus, value))| (next_input, -i8::try_from(value).unwrap()))
 }
