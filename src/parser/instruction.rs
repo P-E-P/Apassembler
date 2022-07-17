@@ -11,9 +11,12 @@ use nom::{
     sequence::tuple,
 };
 
-use super::address::{parse_relative, Address};
 use super::operand::{parse_operand, Operand};
 use super::Res;
+use super::{
+    address::{parse_relative, Address},
+    register::Register,
+};
 
 static OPCODES: phf::Map<&'static str, u16> = phf_map! {
     // I
@@ -261,7 +264,7 @@ fn parse_v(input: &str) -> Res<&str, Instruction> {
     )
 }
 
-fn parse_iv_opname(input: &str) -> Res<&str, &str> {
+fn parse_iv_opname_generic(input: &str) -> Res<&str, &str> {
     context(
         "iv opcode name",
         alt((
@@ -271,7 +274,6 @@ fn parse_iv_opname(input: &str) -> Res<&str, &str> {
             tag("CLR"),
             tag("PUSH"),
             tag("PULL"),
-            tag("ROI"),
             tag("TST"),
             tag("SET"),
         )),
@@ -279,18 +281,41 @@ fn parse_iv_opname(input: &str) -> Res<&str, &str> {
     .map(|(next_input, res)| (next_input, res))
 }
 
+fn parse_iv_generic(input: &str) -> Res<&str, Instruction> {
+    context(
+        "iv generic",
+        tuple((parse_iv_opname_generic, space1, parse_operand)),
+    )(input)
+    .map(|(next_input, (opname, _, operand))| {
+        (
+            next_input,
+            Instruction::IV {
+                opname: opname.to_owned(),
+                tsd: operand,
+            },
+        )
+    })
+}
+
+fn parse_iv_opname_roi(input: &str) -> Res<&str, &str> {
+    context("iv roi opcode name", tag("ROI"))(input).map(|(next_input, res)| (next_input, res))
+}
+
+fn parse_iv_roi(input: &str) -> Res<&str, Instruction> {
+    context("iv roi", parse_iv_opname_roi)(input).map(|(next_input, opname)| {
+        (
+            next_input,
+            Instruction::IV {
+                opname: opname.to_owned(),
+                tsd: Operand::Direct(Register(0)),
+            },
+        )
+    })
+}
+
 fn parse_iv(input: &str) -> Res<&str, Instruction> {
-    context("iv", tuple((parse_iv_opname, space1, parse_operand)))(input).map(
-        |(next_input, (opname, _, operand))| {
-            (
-                next_input,
-                Instruction::IV {
-                    opname: opname.to_owned(),
-                    tsd: operand,
-                },
-            )
-        },
-    )
+    context("iv", alt((parse_iv_generic, parse_iv_roi)))(input)
+        .map(|(next_input, instruction)| (next_input, instruction))
 }
 
 fn parse_iii_opname(input: &str) -> Res<&str, &str> {
