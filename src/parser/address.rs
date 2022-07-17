@@ -44,21 +44,21 @@ fn sym_address_char(chr: char) -> bool {
 }
 
 pub fn parse_address(input: &str) -> Res<&str, Address> {
-    context("Address", alt((parse_raw_address, parse_symbolic_address)))(input)
+    context("Address", alt((parse_raw, parse_symbolic)))(input)
 }
 
-fn parse_symbolic_address(input: &str) -> Res<&str, Address> {
+fn parse_symbolic(input: &str) -> Res<&str, Address> {
     context("@Address", tuple((tag("@"), take_while(sym_address_char))))(input)
         .map(|(next_input, (_a, address))| (next_input, Address::Symbolic(address.to_owned())))
 }
 
-pub fn parse_raw_address_value(input: &str) -> Res<&str, u16> {
+pub fn parse_raw_value(input: &str) -> Res<&str, u16> {
     context("Raw address", tuple((tag("0x"), hex_16bits)))(input)
         .map(|(next_input, (_prefix, address))| (next_input, address))
 }
 
-fn parse_raw_address(input: &str) -> Res<&str, Address> {
-    context("Raw address", parse_raw_address_value)(input)
+fn parse_raw(input: &str) -> Res<&str, Address> {
+    context("Raw address", parse_raw_value)(input)
         .map(|(next_input, address)| (next_input, Address::Raw(address)))
 }
 
@@ -68,13 +68,13 @@ mod tests {
 
     #[test]
     fn raw_address() {
-        assert_eq!(parse_raw_address("0x1102"), Ok(("", Address::Raw(0x1102))))
+        assert_eq!(parse_raw("0x1102"), Ok(("", Address::Raw(0x1102))))
     }
 
     #[test]
     fn address() {
         assert_eq!(
-            parse_symbolic_address("@Address"),
+            parse_symbolic("@Address"),
             Ok(("", Address::Symbolic("Address".to_owned())))
         )
     }

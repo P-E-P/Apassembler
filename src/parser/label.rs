@@ -1,4 +1,4 @@
-use super::address::parse_raw_address_value;
+use super::address::parse_raw_value;
 use super::Res;
 use nom::{
     bytes::complete::take_while,
@@ -28,7 +28,7 @@ pub fn parse_label(input: &str) -> Res<&str, Label> {
     context(
         "@Address",
         tuple((
-            delimited(char('('), parse_raw_address_value, char(')')),
+            delimited(char('('), parse_raw_value, char(')')),
             space0,
             parse_label_name,
         )),
